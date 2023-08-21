@@ -1,8 +1,18 @@
 [package]
 name = "headjack"
 version = "0.1.0"
+authors = ["Florian Rupprecht <floruppr@gmail.com>"]
+license = "MIT"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+argminmax = { version = "0.6.1", features = ["ndarray", "float"], default-features = false }
+crossterm = "0.26.1"
+image = "0.24.7"
+lru = "0.11.0"
+ndarray = "0.15.6"
+ndarray-stats = "0.5.1"
+nifti = "0.16.0"
+noisy_float = "0.2.0"
+num = "0.4.1"
+tui = { package = "ratatui", version = "0.21.0" }

@@ -1,0 +1,1 @@
+cargo run -- "C:/sdk/freesurfer/regina.nii.gz"
