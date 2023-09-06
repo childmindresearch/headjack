@@ -7,11 +7,11 @@ use std::io;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
-/// Simple program to greet a person
+/// headjack - Terminal UI 3D volume brain imaging viewer
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Name of the person to greet
+    /// Image file name (.nii or .nii.gz)
     #[arg(index = 1)]
     input: String,
 }

@@ -170,7 +170,7 @@ impl tui::widgets::Widget for SliceWidget<'_> {
                 let val_upper = img_sized.get_pixel(x, y+1)[0] as usize;
                 let val_lower = img_sized.get_pixel(x, y)[0] as usize;
 
-                let gradient = colorous::VIRIDIS;
+                let gradient = colorous::INFERNO;
                 let col_upper = gradient.eval_rational(val_upper, u16::MAX as usize + 1);
                 let col_lower = gradient.eval_rational(val_lower, u16::MAX as usize + 1);
 
