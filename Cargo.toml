@@ -9,7 +9,7 @@ edition = "2021"
 argminmax = { version = "0.6.1", features = ["ndarray", "float"], default-features = false }
 clap = { version = "4.4.2", features = ["derive"] }
 colorous = "1.0.12"
-crossterm = "0.26.1"
+crossterm = "0.27.0"
 image = "0.24.7"
 lazy_static = "1.4.0"
 lru = "0.11.0"
@@ -18,4 +18,4 @@ ndarray-stats = "0.5.1"
 nifti = "0.16.0"
 noisy_float = "0.2.0"
 num = "0.4.1"
-tui = { package = "ratatui", version = "0.21.0" }
+tui = { package = "ratatui", version = "0.23.0" }
