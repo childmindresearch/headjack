@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate lazy_static;
+
 /// Application.
 pub mod app;
 
@@ -15,3 +18,4 @@ pub mod handler;
 
 pub mod argminmax2;
 pub mod brain;
+pub mod sampler3d;

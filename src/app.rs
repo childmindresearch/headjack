@@ -1,9 +1,15 @@
 use std::error;
 
-use crate::{brain, argminmax2::MinMax2};
+use crate::sampler3d;
 
 /// Application result type.
 pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
+
+#[derive(Debug)]
+pub enum AppMode {
+    Xyz,
+    MetaData,
+}
 
 /// Application.
 #[derive(Debug)]
@@ -12,32 +18,36 @@ pub struct App {
     pub running: bool,
 
     pub file_path: String,
-    pub image_cache: brain::ImageCache,
+    pub image_sampler: sampler3d::Sampler3D,
+    pub image_cache: sampler3d::ImageCache,
     pub intensity_range: (f32, f32),
     pub slice_position: Vec<usize>,
     pub increment: usize,
+    pub mode: AppMode,
 }
 
 impl App {
     /// Constructs a new instance of [`App`].
     pub fn new(file_path: &str) -> Self {
         println!("Read nifti...");
-        let nifti = brain::read_nifti(file_path).unwrap();
-        let mm = nifti.minmax2();
-        let range = mm.1 - mm.0;
-        let mm = (mm.0, mm.1 - range * 0.8);
-        let middle_slice: Vec<usize> = Vec::from(nifti.shape()).iter().map(|x| x / 2).collect();
+        let sampler = sampler3d::Sampler3D::from_nifti(file_path).unwrap();
+        let intensity_range = sampler.intensity_range();
+        let middle_slice = sampler.middle_slice();
+
+        let increment = sampler.shape().iter().copied().sum::<usize>() / sampler.shape().len() / 32;
 
         println!(" done!");
-        println!("Image dimensions {:?}", nifti.shape());
+        println!("Image dimensions {:?}", sampler.shape());
 
         Self {
             running: true,
             file_path: file_path.to_string(),
-            image_cache: brain::ImageCache::new(nifti),
-            intensity_range: mm,
+            image_sampler: sampler,
+            image_cache: sampler3d::ImageCache::new(),
+            intensity_range: intensity_range,
             slice_position: middle_slice,
-            increment: 10,
+            increment: increment,
+            mode: AppMode::Xyz,
         }
     }
 
@@ -52,7 +62,7 @@ impl App {
     pub fn increment_slice(&mut self, axis: usize) {
         match axis {
             0..=2 => {
-                if self.slice_position[axis] + self.increment < self.image_cache.data.shape()[axis] {
+                if self.slice_position[axis] + self.increment < self.image_sampler.shape()[axis] {
                     self.slice_position[axis] += self.increment;
                 }
             },
@@ -68,6 +78,13 @@ impl App {
                 }
             },
             _ => {}
+        }
+    }
+
+    pub fn toggle_tab(&mut self) {
+        self.mode = match self.mode {
+            AppMode::Xyz => AppMode::MetaData,
+            AppMode::MetaData => AppMode::Xyz,
         }
     }
 }

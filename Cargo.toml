@@ -7,8 +7,11 @@ edition = "2021"
 
 [dependencies]
 argminmax = { version = "0.6.1", features = ["ndarray", "float"], default-features = false }
+clap = { version = "4.4.2", features = ["derive"] }
+colorous = "1.0.12"
 crossterm = "0.26.1"
 image = "0.24.7"
+lazy_static = "1.4.0"
 lru = "0.11.0"
 ndarray = "0.15.6"
 ndarray-stats = "0.5.1"

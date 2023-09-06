@@ -1,136 +1,58 @@
-use lru::LruCache;
-use ndarray_stats::QuantileExt;
-use std::{error::Error, num::NonZeroUsize, primitive};
 
-use argminmax::ArgMinMax;
-use image::GrayImage;
-use ndarray::{s, Array, Array2, ArrayBase, ArrayD, ArrayView, ArrayView2, Ix2};
-use nifti::{IntoNdArray, NiftiObject, NiftiVolume, ReaderStreamedOptions};
-use noisy_float::types::{n32, n64, N32};
 
-use crate::argminmax2::MinMax2;
+use crate::sampler3d;
 
-/// Scale x and y relative so that the bigger one will be max_val.
-fn scale_relative(x: u32, y: u32, max_val: u32) -> (u32, u32) {
-    let (fx, fy, fmax_val) = (x as f32, y as f32, max_val as f32);
 
-    let fxy_max = std::cmp::max(x, y) as f32;
-
-    let out_x = std::cmp::min(((fx / fxy_max) * fmax_val) as u32, max_val);
-    let out_y = std::cmp::min(((fy / fxy_max) * fmax_val) as u32, max_val);
-
-    return (out_x, out_y);
+pub struct MetaDataWidget<'a> {
+    pub image_sampler: &'a sampler3d::Sampler3D,
+    pub entries: Vec<(String, String)>,
+    pub max_key_len: usize,
 }
 
-fn normalize_u8<D>(data: &Array<f32, D>, intensity_range: (f32, f32)) -> Array<u8, D>
-where
-    D: ndarray::Dimension,
-{
-    let (imin, imax) = intensity_range;
-    return (((data - imin) / (imax - imin)) * 255.).mapv(|v| num::clamp(v, 0., 255.) as u8);
-}
+impl<'a> MetaDataWidget<'a> {
+    pub fn new(image_sampler: &'a sampler3d::Sampler3D) -> Self {
+        let ndim = image_sampler.header.dim[0] as usize;
+        let entries: Vec<(String, String)> = vec![
+            ("Data type".to_owned(), format!("{:?}", image_sampler.header.data_type().unwrap())),
+            ("Ndim".to_owned(), format!("{}", image_sampler.header.dim[0])),
+            ("Shape".to_owned(), format!("{:?}", &image_sampler.header.dim[1..ndim + 1])),
+            ("Units".to_owned(), format!("{:?} (space); {:?} (time)", &image_sampler.header.xyzt_to_space().unwrap_or(nifti::Unit::Unknown), &image_sampler.header.xyzt_to_time().unwrap_or(nifti::Unit::Unknown))),
 
-fn make_image_gray(data: Array2<u8>) -> GrayImage {
-    let width = data.shape()[0] as u32;
-    let height = data.shape()[1] as u32;
-    return GrayImage::from_raw(height, width, data.reversed_axes().into_raw_vec()).unwrap();
-}
+            ("Data scaling".to_owned(), format!("{} + {} * x", image_sampler.header.scl_inter, image_sampler.header.scl_slope)),
+            ("Display range".to_owned(), format!("[{}, {}]", image_sampler.header.cal_min, image_sampler.header.cal_max)),
+            ("Description".to_owned(), format!("'{}'", String::from_utf8(image_sampler.header.descrip.clone()).unwrap_or("<error>".to_owned()))),
+            ("Intent".to_owned(), format!("'{}'", String::from_utf8(image_sampler.header.intent_name.to_vec()).unwrap_or("<error>".to_owned()))),
+            ("Slice order".to_owned(), format!("{:?}", &image_sampler.header.slice_order().unwrap_or(nifti::SliceOrder::Unknown))),
+            ("Slice duration".to_owned(), format!("{}", image_sampler.header.slice_duration)),
+            ("Affine".to_owned(), format!("{:?}", &image_sampler.header.srow_x)),
+            ("".to_owned(), format!("{:?}", &image_sampler.header.srow_y)),
+            ("".to_owned(), format!("{:?}", &image_sampler.header.srow_z)),
 
-pub type BrainVolume = ArrayD<f32>;
+        ];
 
-pub fn read_nifti(path_nifti: &str) -> Result<BrainVolume, Box<dyn Error>> {
-    println!("Read file...");
+        let max_key_len = entries.iter().map(|(k, _)| k.len()).max().unwrap();
 
-    let re = {
-        nifti::ReaderOptions::new()
-            .read_file(path_nifti)?
-            .into_volume()
-            .into_ndarray::<f32>()?
-            .reversed_axes()
-    };
-
-    println!("Done!");
-
-    Ok(re)
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ImageSample {
-    pub width: u16,
-    pub height: u16,
-    pub index: usize,
-    pub axis: usize,
-    pub intensity_min: N32,
-    pub intensity_max: N32,
-}
-
-impl ImageSample {
-    pub fn new(
-        width: u16,
-        height: u16,
-        index: usize,
-        axis: usize,
-        intensity_range: (f32, f32),
-    ) -> Self {
         Self {
-            width,
-            height,
-            index,
-            axis,
-            intensity_min: n32(intensity_range.0),
-            intensity_max: n32(intensity_range.1),
+            image_sampler,
+            entries,
+            max_key_len,
         }
     }
-
-    pub fn intensity_range(&self) -> (f32, f32) {
-        (self.intensity_min.into(), self.intensity_max.into())
-    }
 }
 
-#[derive(Debug)]
-pub struct ImageCache {
-    pub image_cache: LruCache<ImageSample, (GrayImage, (usize, usize))>,
-    pub data: BrainVolume,
-}
+impl tui::widgets::Widget for MetaDataWidget<'_> {
+    fn render(self, area: tui::layout::Rect, buf: &mut tui::buffer::Buffer) {
 
-impl ImageCache {
-    pub fn new(data: BrainVolume) -> ImageCache {
-        Self {
-            image_cache: LruCache::new(NonZeroUsize::new(50).unwrap()),
-            data,
+
+        for (i, (key, val)) in self.entries.iter().enumerate() {
+            if i < (area.height -1) as usize {
+                buf.set_stringn(area.x, area.y + i as u16, key, self.max_key_len, tui::style::Style::default().fg(tui::style::Color::Cyan).add_modifier(tui::style::Modifier::BOLD));
+                buf.set_stringn(area.x + self.max_key_len as u16 + 1, area.y + i as u16, val, area.width.into(), tui::style::Style::default());
+            } else if i == (area.height -1) as usize {
+                buf.set_stringn(area.x + 1, area.y + i as u16, "[...]", area.width.into(), tui::style::Style::default());
+            }
         }
-    }
 
-    pub fn get(&mut self, sample: ImageSample) -> &(GrayImage, (usize, usize)) {
-        self.image_cache.get_or_insert(sample, || {
-            let arr2d: ArrayView2<f32> = match self.data.ndim() {
-                2 => self.data.view().into_dimensionality::<Ix2>().unwrap(),
-                3 => {
-                    let index_clamped =
-                        num::clamp(sample.index, 0, self.data.dim()[sample.axis] - 1);
-                    let slice = match sample.axis {
-                        0 => s![index_clamped, .., ..],
-                        1 => s![.., index_clamped, ..],
-                        2 => s![.., .., index_clamped],
-                        _ => panic!("Unsupported axis"),
-                    };
-                    self.data.slice(slice).into_dimensionality::<Ix2>().unwrap()
-                }
-                _ => panic!("Unsupported dimensionality"),
-            };
-
-            let image_limits = (arr2d.shape()[0], arr2d.shape()[1]);
-
-            let arr2d_norm: Array2<u8> = normalize_u8(&arr2d.to_owned(), sample.intensity_range());
-            let img: GrayImage = make_image_gray(arr2d_norm);
-
-            (image::imageops::resize(
-                &img,
-                sample.width.into(),
-                sample.height.into(),
-                image::imageops::FilterType::Triangle,
-            ),image_limits)
-        })
     }
 }
 
@@ -138,21 +60,24 @@ pub struct SliceWidget<'a> {
     pub intensity_range: (f32, f32),
     pub slice_position: Vec<usize>,
     pub axis: usize,
-    pub image_cache: &'a mut ImageCache,
+    pub image_sampler: &'a sampler3d::Sampler3D,
+    pub image_cache: &'a mut sampler3d::ImageCache,
     pub block: Option<tui::widgets::Block<'a>>,
 }
 
 impl<'a> SliceWidget<'a> {
     pub fn new(
-        image_cache: &'a mut ImageCache,
+        image_sampler: &'a sampler3d::Sampler3D,
+        image_cache: &'a mut sampler3d::ImageCache,
         intensity_range: (f32, f32),
         slice_position: Vec<usize>,
         axis: usize,
-    ) -> SliceWidget {
+    ) -> SliceWidget<'a> {
         Self {
             intensity_range,
             slice_position,
             axis,
+            image_sampler,
             image_cache,
             block: None,
         }
@@ -162,6 +87,40 @@ impl<'a> SliceWidget<'a> {
         self.block = Some(block);
         self
     }
+}
+
+
+pub fn colorous2tui(value: colorous::Color) ->tui::style::Color  {
+    tui::style::Color::Rgb(value.r, value.g, value.b)
+}
+
+pub fn invert_color(value: colorous::Color) -> colorous::Color {
+    colorous::Color { 
+        r: 255-value.r, 
+        g: 255-value.g, 
+        b: 255-value.b
+    }
+}
+
+pub fn position_2d<T>(position: &Vec<T>, axis: usize) -> (&T, &T, &T) {
+    let index = &position[axis];
+    let y_index: &T = &position[match axis {
+        0 => 1,
+        1 => 0,
+        2 => 0,
+        _ => panic!("Unsupported axis"),
+    }];
+    let x_index: &T = &position[match axis {
+        0 => 2,
+        1 => 2,
+        2 => 1,
+        _ => panic!("Unsupported axis"),
+    }];
+    return (index, x_index, y_index)
+}
+
+lazy_static! {
+    static ref RAS_LABELS: Vec<&'static str> = vec!["IS", "PA", "LR"];
 }
 
 impl tui::widgets::Widget for SliceWidget<'_> {
@@ -175,61 +134,81 @@ impl tui::widgets::Widget for SliceWidget<'_> {
             None => area,
         };
 
-        let index = self.slice_position[self.axis];
-        let x_index: usize = self.slice_position[match self.axis {
-            0 => 1,
-            1 => 0,
-            2 => 0,
-            _ => panic!("Unsupported axis"),
-        }];
-        let y_index: usize = self.slice_position[match self.axis {
-            0 => 2,
-            1 => 2,
-            2 => 1,
-            _ => panic!("Unsupported axis"),
-        }];
+        let (index, x_index, y_index) = position_2d(&self.slice_position, self.axis);
+        
 
-        let sample = ImageSample::new(
+        let sample = sampler3d::ImageSample::new(
             text_area.width,
-            text_area.height,
-            index,
+            text_area.height * 2,
+            *index,
             self.axis,
             self.intensity_range,
         );
 
-        let (img_sized, img_sized_limits) = self.image_cache.get(sample);
+        let (img_sized, img_sized_limits) = self.image_cache.get(&self.image_sampler.arr, sample);
 
         //let palette = vec![" ", ".", ":", "-", "=", "+", "*", "#", "%", "@"];
 
-        assert!(img_sized.width() == text_area.width as u32);
-        assert!(img_sized.height() == text_area.height as u32);
+        assert!(img_sized.width() <= text_area.width as u32);
+        assert!(img_sized.height() <= (text_area.height * 2) as u32);
+
+        let x_offset = (text_area.width as u32 - img_sized.width()) / 2;
+        let y_offset = ((text_area.height * 2) as u32 - img_sized.height()) / 2;
+
+        //println!("x_offset: {}", x_offset);
+        //println!("y_offset: {}", y_offset);
 
         let x_index_scaled =
-            ((x_index as f32 / img_sized_limits.0 as f32) * img_sized.width() as f32) as u32;
+            ((*x_index as f32 / img_sized_limits.0 as f32) * img_sized.width() as f32) as u32;
         let y_index_scaled =
-            ((y_index as f32 / img_sized_limits.1 as f32) * img_sized.height() as f32) as u32;
+            ((*y_index as f32 / img_sized_limits.1 as f32) * (img_sized.height()) as f32) as u32;
 
         // write img_sized into buf
-        for y in 0..img_sized.height() {
+        for y in (0..((img_sized.height()/2)*2)).step_by(2) {
             for x in 0..img_sized.width() {
-                let (ix, iy): (u16, u16) = (x as u16, y as u16);
-                let val = img_sized.get_pixel(x, y)[0];
-                //let relative_val = val as f32 / 255.;
-                //let idx = num::clamp((relative_val * 9.) as usize, 0, 9);
+                let (ix, iy): (u16, u16) = ((x + x_offset) as u16, ((y + y_offset) / 2 ) as u16);
+                let val_upper = img_sized.get_pixel(x, y+1)[0] as usize;
+                let val_lower = img_sized.get_pixel(x, y)[0] as usize;
 
-                //buf.get_mut(text_area.left() + ix, text_area.top() + iy).set_char(palette[idx].chars().next().unwrap());
+                let gradient = colorous::VIRIDIS;
+                let col_upper = gradient.eval_rational(val_upper, u16::MAX as usize + 1);
+                let col_lower = gradient.eval_rational(val_lower, u16::MAX as usize + 1);
 
                 let c = buf
-                    .get_mut(text_area.left() + ix, text_area.top() + iy)
-                    .set_bg(tui::style::Color::Rgb(val, val, val));
+                    .get_mut(text_area.left() + ix, text_area.bottom() - iy - 1);
+                    
 
-                if y == y_index_scaled && x == x_index_scaled {
-                    c.set_char('X');
-                } else if y == y_index_scaled {
-                    c.set_char('-');
-                } else if x == x_index_scaled {
-                    c.set_char('|');
-                }
+                let symb = tui::widgets::BorderType::line_symbols(tui::widgets::BorderType::Rounded);
+
+                let crossair_y = (y/2) == (y_index_scaled/2);
+                let crossair_x = x == x_index_scaled;
+
+                if crossair_x || crossair_y {
+                    let col_average = gradient.eval_rational((val_lower + val_upper) / 2, u16::MAX as usize + 1);
+                    let col_inv = colorous2tui(invert_color(col_average));
+                    c.set_bg(colorous2tui(col_average));
+
+                    match (crossair_x, crossair_y) {
+                        (true, true) => c.set_char(symb.cross.chars().next().unwrap()).set_fg(col_inv),
+                        (true, false) => c.set_char(symb.vertical.chars().next().unwrap()).set_fg(col_inv),
+                        (false, true) => c.set_char(symb.horizontal.chars().next().unwrap()).set_fg(col_inv),
+                        _ => panic!()
+                    };
+
+                    if x == 0 {
+                        c.set_char(position_2d::<&str>(&RAS_LABELS, self.axis).1.chars().nth(0).unwrap());
+                    } else if y == 0 {
+                        c.set_char(position_2d::<&str>(&RAS_LABELS, self.axis).2.chars().nth(0).unwrap());
+                    } else if y/2 == img_sized.height()/2-1 {
+                        c.set_char(position_2d::<&str>(&RAS_LABELS, self.axis).2.chars().nth(1).unwrap());
+                    } else if x == img_sized.width()-1 {
+                        c.set_char(position_2d::<&str>(&RAS_LABELS, self.axis).1.chars().nth(1).unwrap());
+                    }
+                } else {
+                    c.set_bg(colorous2tui(col_upper))
+                        .set_char('▄')
+                        .set_fg(colorous2tui(col_lower));
+                };
             }
         }
     }

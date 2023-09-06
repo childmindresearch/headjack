@@ -1,25 +1,27 @@
+use clap::Parser;
 use headjack::app::{App, AppResult};
 use headjack::event::{Event, EventHandler};
-use headjack::handler::handle_key_events;
+use headjack::handler::{handle_key_events, handle_mouse_events};
 use headjack::tui::Tui;
-use std::{io, env};
+use std::io;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
-fn main() -> AppResult<()> {
-    println!("Start.");
+/// Simple program to greet a person
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Name of the person to greet
+    #[arg(index = 1)]
+    input: String,
+}
 
-    // Read CLI arguments.
-    let args: Vec<String> = env::args().collect();
-    let arg_input = args.get(1).ok_or("No input file")?;
-    
-    println!("Create app.");
+fn main() -> AppResult<()> {
+    // Read args
+    let args = Args::parse();
 
     // Create an application.
-    let mut app = App::new(arg_input);
-
-    
-    println!("Init TUI.");
+    let mut app = App::new(&args.input);
 
     // Initialize the terminal user interface.
     let backend = CrosstermBackend::new(io::stderr());
@@ -36,7 +38,7 @@ fn main() -> AppResult<()> {
         match tui.events.next()? {
             Event::Tick => app.tick(),
             Event::Key(key_event) => handle_key_events(key_event, &mut app)?,
-            Event::Mouse(_) => {}
+            Event::Mouse(mouse_event) => handle_mouse_events(mouse_event, &mut app)?,
             Event::Resize(_, _) => {}
         }
     }
