@@ -62,7 +62,8 @@ impl App {
     pub fn increment_slice(&mut self, axis: usize) {
         match axis {
             0..=2 => {
-                if self.slice_position[axis] + self.increment < self.image_sampler.shape()[axis] {
+                let shape = self.image_sampler.shape();
+                if self.slice_position[axis] + self.increment < shape[axis] {
                     self.slice_position[axis] += self.increment;
                 }
             },

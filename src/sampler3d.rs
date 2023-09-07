@@ -10,7 +10,7 @@ use crate::argminmax2::MinMax2;
 pub type BrainVolume = ArrayD<f32>;
 pub type BrainMetaData = nifti::header::NiftiHeader;
 
-/// Scale x and y relative so that the bigger one will be max_val. 
+/// Scale x and y relative so that the bigger one will be max_val.
 fn _scale_relative(x: u32, y: u32, max_val: u32) -> (u32, u32) {
     let (fx, fy, fmax_val) = (x as f32, y as f32, max_val as f32);
 
@@ -33,9 +33,9 @@ fn fit_relative(src_x: u32, src_y: u32, dest_x: u32, dest_y: u32) -> (u32, u32) 
     };
 
     return (
-        (src_x as f32 * resize_factor) as u32, 
-        (src_y as f32 * resize_factor) as u32
-    )
+        (src_x as f32 * resize_factor) as u32,
+        (src_y as f32 * resize_factor) as u32,
+    );
 }
 
 fn _normalize_u8<D>(data: &Array<f32, D>, intensity_range: (f32, f32)) -> Array<u8, D>
@@ -43,7 +43,8 @@ where
     D: ndarray::Dimension,
 {
     let (imin, imax) = intensity_range;
-    return (((data - imin) / (imax - imin)) * (u8::MAX as f32)).mapv(|v| num::clamp(v, u8::MIN as f32, u8::MAX as f32) as u8);
+    return (((data - imin) / (imax - imin)) * (u8::MAX as f32))
+        .mapv(|v| num::clamp(v, u8::MIN as f32, u8::MAX as f32) as u8);
 }
 
 fn normalize_u16<D>(data: &Array<f32, D>, intensity_range: (f32, f32)) -> Array<u16, D>
@@ -51,15 +52,22 @@ where
     D: ndarray::Dimension,
 {
     let (imin, imax) = intensity_range;
-    return (((data - imin) / (imax - imin)) * (u16::MAX as f32)).mapv(|v| num::clamp(v, u16::MIN as f32, u16::MAX as f32) as u16);
+    return (((data - imin) / (imax - imin)) * (u16::MAX as f32))
+        .mapv(|v| num::clamp(v, u16::MIN as f32, u16::MAX as f32) as u16);
 }
 
-fn make_image_gray<D>(data: Array2<D>) -> image::ImageBuffer<Luma<D>, Vec<D>> 
-where D : image::Primitive
+fn make_image_gray<D>(data: Array2<D>) -> image::ImageBuffer<Luma<D>, Vec<D>>
+where
+    D: image::Primitive,
 {
     let width = data.shape()[0] as u32;
     let height = data.shape()[1] as u32;
-    return image::ImageBuffer::<Luma<D>, Vec<D>>::from_raw(height, width, data.reversed_axes().into_raw_vec()).unwrap();
+    return image::ImageBuffer::<Luma<D>, Vec<D>>::from_raw(
+        height,
+        width,
+        data.reversed_axes().into_raw_vec(),
+    )
+    .unwrap();
 }
 
 pub fn read_nifti(path_nifti: &str) -> Result<BrainVolume, Box<dyn Error>> {
@@ -89,14 +97,10 @@ impl Sampler3D {
         let nif = nifti::ReaderOptions::new().read_file(path_nifti)?;
         let header = nif.header().to_owned();
 
-        let arr = {
-            nif.into_volume()
-                .into_ndarray::<f32>()?
-                .reversed_axes()
-        };
-        Ok(Self { 
-            arr: arr, 
-            header: header
+        let arr = { nif.into_volume().into_ndarray::<f32>()?.reversed_axes() };
+        Ok(Self {
+            arr: arr,
+            header: header,
         })
     }
 
@@ -107,11 +111,15 @@ impl Sampler3D {
     }
 
     pub fn shape(&self) -> &[usize] {
-        self.arr.shape()
+        match self.arr.ndim() {
+            3 => self.arr.shape(),
+            4 => &self.arr.shape()[1..],
+            _ => panic!(),
+        }
     }
 
     pub fn middle_slice(&self) -> Vec<usize> {
-        Vec::from(self.arr.shape()).iter().map(|x| x / 2).collect()
+        Vec::from(self.shape()).iter().map(|x| x / 2).collect()
     }
 }
 
@@ -167,8 +175,7 @@ impl ImageCache {
             let arr2d: ArrayView2<f32> = match data.ndim() {
                 2 => data.view().into_dimensionality::<Ix2>().unwrap(),
                 3 => {
-                    let index_clamped =
-                        num::clamp(sample.index, 0, data.dim()[sample.axis] - 1);
+                    let index_clamped = num::clamp(sample.index, 0, data.dim()[sample.axis] - 1);
                     let slice = match sample.axis {
                         0 => s![index_clamped, .., ..],
                         1 => s![.., index_clamped, ..],
@@ -177,15 +184,32 @@ impl ImageCache {
                     };
                     data.slice(slice).into_dimensionality::<Ix2>().unwrap()
                 }
+                4 => {
+                    let index_clamped =
+                        num::clamp(sample.index, 0, data.dim()[sample.axis + 1] - 1);
+                    let slice = match sample.axis {
+                        0 => s![0, index_clamped, .., ..],
+                        1 => s![0, .., index_clamped, ..],
+                        2 => s![0, .., .., index_clamped],
+                        _ => panic!("Unsupported axis"),
+                    };
+                    data.slice(slice).into_dimensionality::<Ix2>().unwrap()
+                }
                 _ => panic!("Unsupported dimensionality"),
             };
 
-            let image_limits = (arr2d.shape()[0], arr2d.shape()[1]);
+            let image_limits = (arr2d.shape()[1], arr2d.shape()[0]);
 
-            let arr2d_norm: Array2<u16> = normalize_u16(&arr2d.to_owned(), sample.intensity_range());
+            let arr2d_norm: Array2<u16> =
+                normalize_u16(&arr2d.to_owned(), sample.intensity_range());
             let img: ImageRep = make_image_gray(arr2d_norm);
 
-            let (target_width, target_height) = fit_relative(img.width(), img.height(), sample.width as u32, sample.height as u32);
+            let (target_width, target_height) = fit_relative(
+                img.width(),
+                img.height(),
+                sample.width as u32,
+                sample.height as u32,
+            );
 
             (
                 image::imageops::resize(
