@@ -39,6 +39,8 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                         app.intensity_range,
                         app.slice_position.clone(),
                         display_axis,
+                        app.color_mode,
+                        app.color_map,
                     )
                     .block(
                         Block::default()

@@ -5,10 +5,17 @@ use crate::sampler3d;
 /// Application result type.
 pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum AppMode {
     Xyz,
     MetaData,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ColorMode {
+    TrueColor,
+    Ansi256,
+    Bw,
 }
 
 /// Application.
@@ -24,11 +31,13 @@ pub struct App {
     pub slice_position: Vec<usize>,
     pub increment: usize,
     pub mode: AppMode,
+    pub color_map: colorous::Gradient,
+    pub color_mode: ColorMode,
 }
 
 impl App {
     /// Constructs a new instance of [`App`].
-    pub fn new(file_path: &str) -> Self {
+    pub fn new(file_path: &str, color_mode: ColorMode) -> Self {
         println!("Read nifti...");
         let sampler = sampler3d::Sampler3D::from_nifti(file_path).unwrap();
         let intensity_range = sampler.intensity_range();
@@ -48,6 +57,8 @@ impl App {
             slice_position: middle_slice,
             increment: increment,
             mode: AppMode::Xyz,
+            color_map: colorous::INFERNO,
+            color_mode: color_mode,
         }
     }
 
@@ -66,8 +77,8 @@ impl App {
                 if self.slice_position[axis] + self.increment < shape[axis] {
                     self.slice_position[axis] += self.increment;
                 }
-            },
-            _ => {}	
+            }
+            _ => {}
         }
     }
 
@@ -77,7 +88,7 @@ impl App {
                 if self.slice_position[axis] >= self.increment {
                     self.slice_position[axis] -= self.increment;
                 }
-            },
+            }
             _ => {}
         }
     }

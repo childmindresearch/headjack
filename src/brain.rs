@@ -1,4 +1,4 @@
-use crate::sampler3d;
+use crate::{sampler3d, app::ColorMode};
 
 pub struct MetaDataWidget<'a> {
     pub image_sampler: &'a sampler3d::Sampler3D,
@@ -138,6 +138,8 @@ pub struct SliceWidget<'a> {
     pub image_sampler: &'a sampler3d::Sampler3D,
     pub image_cache: &'a mut sampler3d::ImageCache,
     pub block: Option<tui::widgets::Block<'a>>,
+    pub color_mode: ColorMode,
+    pub color_map: colorous::Gradient,
 }
 
 impl<'a> SliceWidget<'a> {
@@ -147,6 +149,8 @@ impl<'a> SliceWidget<'a> {
         intensity_range: (f32, f32),
         slice_position: Vec<usize>,
         axis: usize,
+        color_mode: ColorMode,
+        color_map: colorous::Gradient,
     ) -> SliceWidget<'a> {
         Self {
             intensity_range,
@@ -155,6 +159,8 @@ impl<'a> SliceWidget<'a> {
             image_sampler,
             image_cache,
             block: None,
+            color_mode,
+            color_map
         }
     }
 
@@ -195,6 +201,64 @@ pub fn position_2d<T>(position: &Vec<T>, axis: usize) -> (&T, &T, &T) {
 
 lazy_static! {
     static ref RAS_LABELS: Vec<&'static str> = vec!["IS", "PA", "LR"];
+}
+
+struct HjColor(colorous::Color);
+
+impl ansi_colours::AsRGB for HjColor {
+    fn as_u32(&self) -> u32 {
+        ((self.0.r as u32) << 16) + ((self.0.g as u32) << 8) + self.0.b as u32
+    }
+}
+
+impl Into<tui::style::Color> for HjColor {
+    fn into(self) -> tui::style::Color {
+        tui::style::Color::Rgb(self.0.r, self.0.g, self.0.b)
+    }
+}
+
+impl HjColor {
+    pub fn invert(&self) -> Self {
+        Self {
+            0: colorous::Color { 
+                r: 255 - self.0.r,
+                g: 255 - self.0.g,
+                b: 255 - self.0.b,
+            }
+        }
+    }
+}
+
+fn calc_termcolor(mode: ColorMode, map: colorous::Gradient, val: usize, val_max: usize) -> tui::style::Color {
+    let rgb = HjColor(map.eval_rational(val, val_max));
+
+    match mode {
+        ColorMode::TrueColor => {
+            rgb.into()
+        },
+        ColorMode::Ansi256 => {
+            tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
+        },
+        ColorMode::Bw => {
+            if val > (val_max/2) { tui::style::Color::White } else { tui::style::Color::Black }
+        },
+    }
+}
+
+fn calc_termcolor_inverted(mode: ColorMode, map: colorous::Gradient, val: usize, val_max: usize) -> tui::style::Color {
+    let rgb = HjColor(map.eval_rational(val, val_max)).invert();
+
+    match mode {
+        ColorMode::TrueColor => {
+            rgb.into()
+        },
+        ColorMode::Ansi256 => {
+            tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
+        },
+        ColorMode::Bw => {
+            if val <= (val_max/2) { tui::style::Color::White } else { tui::style::Color::Black }
+        },
+    }
 }
 
 impl tui::widgets::Widget for SliceWidget<'_> {
@@ -243,9 +307,8 @@ impl tui::widgets::Widget for SliceWidget<'_> {
                 let val_upper = img_sized.get_pixel(x, y + 1)[0] as usize;
                 let val_lower = img_sized.get_pixel(x, y)[0] as usize;
 
-                let gradient = colorous::INFERNO;
-                let col_upper = gradient.eval_rational(val_upper, u16::MAX as usize + 1);
-                let col_lower = gradient.eval_rational(val_lower, u16::MAX as usize + 1);
+                let col_upper = calc_termcolor(self.color_mode, self.color_map, val_upper, u16::MAX as usize + 1);
+                let col_lower = calc_termcolor(self.color_mode, self.color_map, val_lower, u16::MAX as usize + 1);
 
                 let c = buf.get_mut(text_area.left() + ix, text_area.bottom() - iy - 1);
 
@@ -256,10 +319,9 @@ impl tui::widgets::Widget for SliceWidget<'_> {
                 let crossair_x = x == x_index_scaled;
 
                 if crossair_x || crossair_y {
-                    let col_average =
-                        gradient.eval_rational((val_lower + val_upper) / 2, u16::MAX as usize + 1);
-                    let col_inv = colorous2tui(invert_color(col_average));
-                    c.set_bg(colorous2tui(col_average));
+                    let col_average = calc_termcolor(self.color_mode, self.color_map, (val_lower + val_upper) / 2, u16::MAX as usize + 1);
+                    let col_inv = calc_termcolor_inverted(self.color_mode, self.color_map, (val_lower + val_upper) / 2, u16::MAX as usize + 1);
+                    c.set_bg(col_average);
 
                     match (crossair_x, crossair_y) {
                         (true, true) => c
@@ -308,9 +370,9 @@ impl tui::widgets::Widget for SliceWidget<'_> {
                         );
                     }
                 } else {
-                    c.set_bg(colorous2tui(col_upper))
+                    c.set_bg(col_upper)
                         .set_char('▄')
-                        .set_fg(colorous2tui(col_lower));
+                        .set_fg(col_lower);
                 };
             }
         }

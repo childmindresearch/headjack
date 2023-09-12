@@ -1,5 +1,5 @@
 use clap::Parser;
-use headjack::app::{App, AppResult};
+use headjack::app::{App, AppResult, ColorMode};
 use headjack::event::{Event, EventHandler};
 use headjack::handler::{handle_key_events, handle_mouse_events};
 use headjack::tui::Tui;
@@ -14,14 +14,32 @@ struct Args {
     /// Image file name (.nii or .nii.gz)
     #[arg(index = 1)]
     input: String,
+
+    /// ANSI color mode for terminals not supporting true color (24bit).
+    #[arg(short, long, action)]
+    ansi: bool,
+    
+    /// Black and white color mode for terminals not supporting any color (what year is this?).
+    #[arg(short, long, action)]
+    bw: bool,
 }
+
+
 
 fn main() -> AppResult<()> {
     // Read args
     let args = Args::parse();
 
+    let color_mode = if args.bw {
+        ColorMode::Bw
+    } else if args.ansi {
+        ColorMode::Ansi256
+    } else {
+        ColorMode::TrueColor
+    };
+
     // Create an application.
-    let mut app = App::new(&args.input);
+    let mut app = App::new(&args.input, color_mode);
 
     // Initialize the terminal user interface.
     let backend = CrosstermBackend::new(io::stderr());
