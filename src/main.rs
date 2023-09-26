@@ -1,8 +1,9 @@
 use clap::Parser;
-use headjack::app::{App, AppResult, ColorMode};
+use headjack::app::{App, AppResult};
 use headjack::event::{Event, EventHandler};
 use headjack::handler::{handle_key_events, handle_mouse_events};
 use headjack::tui::Tui;
+use headjack::utils::colors::ColorMode;
 use std::io;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;

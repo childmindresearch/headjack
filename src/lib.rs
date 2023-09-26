@@ -16,6 +16,5 @@ pub mod tui;
 /// Event handler.
 pub mod handler;
 
-pub mod argminmax2;
-pub mod brain;
-pub mod sampler3d;
+pub mod utils;
+pub mod widgets;

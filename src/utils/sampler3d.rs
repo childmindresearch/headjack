@@ -5,7 +5,7 @@ use ndarray::{s, Array, Array2, ArrayD, ArrayView2, Ix2};
 use nifti::{IntoNdArray, NiftiObject};
 use noisy_float::types::{n32, N32};
 
-use crate::argminmax2::MinMax2;
+use crate::utils::argminmax2::MinMax2;
 
 pub type BrainVolume = ArrayD<f32>;
 pub type BrainMetaData = nifti::header::NiftiHeader;
