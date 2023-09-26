@@ -9,7 +9,7 @@ use crate::{
     widgets::{
         key_value_list_widget::KeyValueListWidget,
         slice_widget::{SliceParams, XyzWidget},
-        title_bar::TitleBarWidget,
+        title_bar::TitleBarWidget, color_bar::ColorBarWidget,
     },
 };
 
@@ -19,7 +19,7 @@ static MODE_TITLES: [&str; 2] = ["Voxel", "Metadata"];
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     let layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(1), Constraint::Min(0)].as_ref())
+        .constraints([Constraint::Length(1), Constraint::Min(0), Constraint::Length(1)].as_ref())
         .split(frame.size());
 
     // write out filename
@@ -30,6 +30,8 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     };
 
     frame.render_widget(TitleBarWidget::new(&app.file_path, &MODE_TITLES, mode_index), layout[0]);
+
+    frame.render_widget(ColorBarWidget::new("Inferno", app.color_map, app.intensity_range.0, app.intensity_range.1), layout[2]);
 
     match app.mode {
         crate::app::AppMode::Xyz => {
