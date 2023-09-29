@@ -7,9 +7,10 @@ use tui::{
 use crate::{
     app::App,
     widgets::{
+        color_bar::ColorBarWidget,
         key_value_list_widget::KeyValueListWidget,
         slice_widget::{SliceParams, XyzWidget},
-        title_bar::TitleBarWidget, color_bar::ColorBarWidget,
+        title_bar::TitleBarWidget,
     },
 };
 
@@ -19,7 +20,14 @@ static MODE_TITLES: [&str; 2] = ["Voxel", "Metadata"];
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     let layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(1), Constraint::Min(0), Constraint::Length(1)].as_ref())
+        .constraints(
+            [
+                Constraint::Length(1),
+                Constraint::Min(0),
+                Constraint::Length(1),
+            ]
+            .as_ref(),
+        )
         .split(frame.size());
 
     // write out filename
@@ -29,9 +37,20 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
         crate::app::AppMode::MetaData => 1,
     };
 
-    frame.render_widget(TitleBarWidget::new(&app.file_path, &MODE_TITLES, mode_index), layout[0]);
+    frame.render_widget(
+        TitleBarWidget::new(&app.file_path, &MODE_TITLES, mode_index),
+        layout[0],
+    );
 
-    frame.render_widget(ColorBarWidget::new("Inferno", app.color_map, app.intensity_range.0, app.intensity_range.1), layout[2]);
+    frame.render_widget(
+        ColorBarWidget::new(
+            "Inferno",
+            app.color_map,
+            app.intensity_range.0,
+            app.intensity_range.1,
+        ),
+        layout[2],
+    );
 
     match app.mode {
         crate::app::AppMode::Xyz => {
@@ -42,7 +61,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                 color_mode: app.color_mode,
             };
             frame.render_widget(
-                XyzWidget::new(&app.image_sampler, &mut app.image_cache, &slice),
+                XyzWidget::new(&app.volume, &mut app.image_cache, &slice),
                 layout[1],
             );
         }

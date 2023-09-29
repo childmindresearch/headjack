@@ -31,7 +31,7 @@ impl HjColor {
     }
 }
 
-pub fn calc_termcolor(mode: ColorMode, map: colorous::Gradient, val: usize, val_max: usize) -> tui::style::Color {
+pub fn calc_termcolor_rational(mode: ColorMode, map: colorous::Gradient, val: usize, val_max: usize) -> tui::style::Color {
     let rgb = HjColor(map.eval_rational(val, val_max));
 
     match mode {
@@ -47,7 +47,23 @@ pub fn calc_termcolor(mode: ColorMode, map: colorous::Gradient, val: usize, val_
     }
 }
 
-pub fn calc_termcolor_inverted(mode: ColorMode, map: colorous::Gradient, val: usize, val_max: usize) -> tui::style::Color {
+pub fn calc_termcolor_continuous(mode: ColorMode, map: colorous::Gradient, val: f64) -> tui::style::Color {
+    let rgb = HjColor(map.eval_continuous(val));
+
+    match mode {
+        ColorMode::TrueColor => {
+            rgb.into()
+        },
+        ColorMode::Ansi256 => {
+            tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
+        },
+        ColorMode::Bw => {
+            if val > 0.5 { tui::style::Color::White } else { tui::style::Color::Black }
+        },
+    }
+}
+
+pub fn calc_termcolor_inverted_rational(mode: ColorMode, map: colorous::Gradient, val: usize, val_max: usize) -> tui::style::Color {
     let rgb = HjColor(map.eval_rational(val, val_max)).invert();
 
     match mode {
@@ -59,6 +75,22 @@ pub fn calc_termcolor_inverted(mode: ColorMode, map: colorous::Gradient, val: us
         },
         ColorMode::Bw => {
             if val <= (val_max/2) { tui::style::Color::White } else { tui::style::Color::Black }
+        },
+    }
+}
+
+pub fn calc_termcolor_inverted_continuous(mode: ColorMode, map: colorous::Gradient, val: f64) -> tui::style::Color {
+    let rgb = HjColor(map.eval_continuous(val)).invert();
+
+    match mode {
+        ColorMode::TrueColor => {
+            rgb.into()
+        },
+        ColorMode::Ansi256 => {
+            tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
+        },
+        ColorMode::Bw => {
+            if val <= 0.5 { tui::style::Color::White } else { tui::style::Color::Black }
         },
     }
 }

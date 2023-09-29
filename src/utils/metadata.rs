@@ -1,34 +1,32 @@
-use crate::utils::sampler3d;
+use crate::utils::brain_volume::BrainMetaData;
 
 use crate::widgets::key_value_list_widget::KeyValueList;
 
 pub fn make_metadata_key_value_list(
-    image_sampler: &sampler3d::Sampler3D,
+    header: &BrainMetaData,
 ) -> KeyValueList {
-    let ndim = image_sampler.header.dim[0] as usize;
+    let ndim = header.dim[0] as usize;
     vec![
         (
             "Data type".to_owned(),
-            format!("{:?}", image_sampler.header.data_type().unwrap()),
+            format!("{:?}", header.data_type().unwrap()),
         ),
         (
             "Ndim".to_owned(),
-            format!("{}", image_sampler.header.dim[0]),
+            format!("{}", header.dim[0]),
         ),
         (
             "Shape".to_owned(),
-            format!("{:?}", &image_sampler.header.dim[1..ndim + 1]),
+            format!("{:?}", &header.dim[1..ndim + 1]),
         ),
         (
             "Units".to_owned(),
             format!(
                 "{:?} (space); {:?} (time)",
-                &image_sampler
-                    .header
+                &header
                     .xyzt_to_space()
                     .unwrap_or(nifti::Unit::Unknown),
-                &image_sampler
-                    .header
+                &header
                     .xyzt_to_time()
                     .unwrap_or(nifti::Unit::Unknown)
             ),
@@ -37,21 +35,21 @@ pub fn make_metadata_key_value_list(
             "Data scaling".to_owned(),
             format!(
                 "{} + {} * x",
-                image_sampler.header.scl_inter, image_sampler.header.scl_slope
+                header.scl_inter, header.scl_slope
             ),
         ),
         (
             "Display range".to_owned(),
             format!(
                 "[{}, {}]",
-                image_sampler.header.cal_min, image_sampler.header.cal_max
+                header.cal_min, header.cal_max
             ),
         ),
         (
             "Description".to_owned(),
             format!(
                 "'{}'",
-                String::from_utf8(image_sampler.header.descrip.clone())
+                String::from_utf8(header.descrip.clone())
                     .unwrap_or("<error>".to_owned())
             ),
         ),
@@ -59,7 +57,7 @@ pub fn make_metadata_key_value_list(
             "Intent".to_owned(),
             format!(
                 "'{}'",
-                String::from_utf8(image_sampler.header.intent_name.to_vec())
+                String::from_utf8(header.intent_name.to_vec())
                     .unwrap_or("<error>".to_owned())
             ),
         ),
@@ -67,21 +65,28 @@ pub fn make_metadata_key_value_list(
             "Slice order".to_owned(),
             format!(
                 "{:?}",
-                &image_sampler
-                    .header
+                &header
                     .slice_order()
                     .unwrap_or(nifti::SliceOrder::Unknown)
             ),
         ),
         (
             "Slice duration".to_owned(),
-            format!("{}", image_sampler.header.slice_duration),
+            format!("{}", header.slice_duration),
         ),
         (
             "Affine".to_owned(),
-            format!("{:?}", &image_sampler.header.srow_x),
+            format!("{:?}", &header.srow_x),
         ),
-        ("".to_owned(), format!("{:?}", &image_sampler.header.srow_y)),
-        ("".to_owned(), format!("{:?}", &image_sampler.header.srow_z)),
+        ("".to_owned(), format!("{:?}", &header.srow_y)),
+        ("".to_owned(), format!("{:?}", &header.srow_z)),
+        (
+            "Grid spacings".to_owned(),
+            format!("{:?}", &header.pixdim[1..ndim + 1]),
+        ),
+        (
+            "Grid offsets".to_owned(),
+            format!("{},{},{}", header.quatern_x, header.quatern_y, header.quatern_z),
+        ),
     ]
 }

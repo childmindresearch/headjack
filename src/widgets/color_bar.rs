@@ -3,12 +3,12 @@ use crate::utils::colors::colorous2tui;
 pub struct ColorBarWidget<'a> {
     pub title: &'a str,
     pub gradient: colorous::Gradient,
-    pub min: f32,
-    pub max: f32,
+    pub min: f64,
+    pub max: f64,
 }
 
 impl<'a> ColorBarWidget<'a> {
-    pub fn new(title: &'a str, gradient: colorous::Gradient, min: f32, max: f32) -> Self {
+    pub fn new(title: &'a str, gradient: colorous::Gradient, min: f64, max: f64) -> Self {
         Self {
             title,
             gradient,
