@@ -90,3 +90,18 @@ pub fn make_metadata_key_value_list(
         ),
     ]
 }
+
+
+pub fn nifti_type_is_integer(t: nifti::NiftiType) -> bool {
+    match t {
+        nifti::NiftiType::Int8 => true,
+        nifti::NiftiType::Int16 => true,
+        nifti::NiftiType::Int32 => true,
+        nifti::NiftiType::Int64 => true,
+        nifti::NiftiType::Uint8 => true,
+        nifti::NiftiType::Uint16 => true,
+        nifti::NiftiType::Uint32 => true,
+        nifti::NiftiType::Uint64 => true,
+        _ => false,
+    }
+}

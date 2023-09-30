@@ -1,7 +1,6 @@
-use std::error;
-
-use crate::{utils, widgets};
 use crate::utils::argminmax2::MinMax2;
+use crate::{utils, widgets};
+use std::error;
 
 /// Application result type.
 pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
@@ -41,6 +40,18 @@ impl App {
         let increment = volume.world_bounds.size().minmax2().0 / 24.0;
         let metadata = utils::metadata::make_metadata_key_value_list(&volume.header);
         let duration = start.elapsed();
+
+        // Guess whether image is a mask or not
+        let color_map = if utils::metadata::nifti_type_is_integer(
+            volume.header.data_type().unwrap_or(nifti::NiftiType::Uint8),
+        ) && intensity_range.0 < 1.0e-7
+            && (intensity_range.1 - 1.0).abs() < 1.0e-7
+        {
+            utils::colors::ColorMap::Greys
+        } else {
+            utils::colors::ColorMap::Inferno
+        };
+
         println!("Data loaded in: {:?}", duration);
 
         Self {
@@ -52,7 +63,7 @@ impl App {
             slice_position: middle_slice,
             increment: increment,
             mode: AppMode::Xyz,
-            color_map: utils::colors::ColorMap::Greys,
+            color_map: color_map,
             color_mode: color_mode,
             metadata: metadata,
             metadata_index: 0,
