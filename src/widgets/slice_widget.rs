@@ -13,7 +13,7 @@ pub struct SliceParams {
     pub position: Vec<f64>,
 
     pub color_mode: utils::colors::ColorMode,
-    pub color_map: colorous::Gradient,
+    pub color_map: utils::colors::ColorMap,
 }
 
 impl SliceParams {
@@ -165,6 +165,8 @@ impl tui::widgets::Widget for SliceWidget<'_> {
         let y_index_rational = ((y_index - world_v_min) / (world_v_max - world_v_min) * (img_arr_height as f64)) as usize;
         let x_index_rational = ((x_index - world_h_min) / (world_h_max - world_h_min) * (img_arr_width as f64)) as usize;
 
+        let color_mapper = self.slice.color_map.get();
+
         // write img_sized into buf
         for y in (0..((img_arr_height / 2) * 2)).step_by(2) {
             for x in 0..img_arr_width {
@@ -175,15 +177,13 @@ impl tui::widgets::Widget for SliceWidget<'_> {
                 let val_lower = (img_arr[[x as usize, y as usize]] - self.slice.intensity_range.0)
                     / intensity_r;
 
-                let col_upper = utils::colors::calc_termcolor_continuous(
-                    self.slice.color_mode,
-                    self.slice.color_map,
+                let col_upper = color_mapper.color(
                     val_upper,
-                );
-                let col_lower = utils::colors::calc_termcolor_continuous(
                     self.slice.color_mode,
-                    self.slice.color_map,
+                );
+                let col_lower = color_mapper.color(
                     val_lower,
+                    self.slice.color_mode,
                 );
 
                 let c = buf.get_mut(text_area.left() + ix, text_area.bottom() - iy - 1);
@@ -195,15 +195,19 @@ impl tui::widgets::Widget for SliceWidget<'_> {
                 let crossair_x = x == x_index_rational;
 
                 if crossair_x || crossair_y {
-                    let col_average = utils::colors::calc_termcolor_continuous(
+                    let col_average = color_mapper.color(
+                        (val_lower + val_upper) / 2.,
+                        self.slice.color_mode,
+                    );
+                    
+                    (
                         self.slice.color_mode,
                         self.slice.color_map,
                         (val_lower + val_upper) / 2.,
                     );
-                    let col_inv = utils::colors::calc_termcolor_inverted_continuous(
-                        self.slice.color_mode,
-                        self.slice.color_map,
+                    let col_inv = color_mapper.color_inverted(
                         (val_lower + val_upper) / 2.,
+                        self.slice.color_mode,
                     );
                     c.set_bg(col_average);
 

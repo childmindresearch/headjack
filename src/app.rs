@@ -25,7 +25,7 @@ pub struct App {
     pub slice_position: Vec<f64>,
     pub increment: f64,
     pub mode: AppMode,
-    pub color_map: colorous::Gradient,
+    pub color_map: utils::colors::ColorMap,
     pub color_mode: utils::colors::ColorMode,
     pub metadata: widgets::key_value_list_widget::KeyValueList,
     pub metadata_index: usize,
@@ -52,7 +52,7 @@ impl App {
             slice_position: middle_slice,
             increment: increment,
             mode: AppMode::Xyz,
-            color_map: colorous::INFERNO,
+            color_map: utils::colors::ColorMap::Greys,
             color_mode: color_mode,
             metadata: metadata,
             metadata_index: 0,
@@ -108,5 +108,9 @@ impl App {
             AppMode::Xyz => AppMode::MetaData,
             AppMode::MetaData => AppMode::Xyz,
         }
+    }
+
+    pub fn toggle_color_map(&mut self) {
+        self.color_map = self.color_map.next();
     }
 }

@@ -44,8 +44,8 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
 
     frame.render_widget(
         ColorBarWidget::new(
-            "Inferno",
             app.color_map,
+            app.color_mode,
             app.intensity_range.0,
             app.intensity_range.1,
         ),

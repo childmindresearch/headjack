@@ -106,3 +106,126 @@ pub fn invert_color(value: colorous::Color) -> colorous::Color {
         b: 255 - value.b,
     }
 }
+
+
+#[derive(Debug, Clone, Copy)]
+pub struct ColorMapper {
+    pub gradient: colorous::Gradient,
+    pub invert: bool,
+}   
+
+impl ColorMapper {
+    /// Get color.
+    /// 
+    /// `value` must be in the range [0.0, 1.0].
+    pub fn color(&self, value: f64, mode: ColorMode) -> tui::style::Color {
+        let rgb = HjColor(self.gradient.eval_continuous(if self.invert {1.0 - value} else { value }));
+
+        match mode {
+            ColorMode::TrueColor => {
+                rgb.into()
+            },
+            ColorMode::Ansi256 => {
+                tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
+            },
+            ColorMode::Bw => {
+                if value > 0.5 { tui::style::Color::White } else { tui::style::Color::Black }
+            },
+        }
+    }
+
+    pub fn color_inverted(&self, value: f64, mode: ColorMode) -> tui::style::Color {
+        let rgb = HjColor(self.gradient.eval_continuous(if self.invert {1.0 - value} else { value })).invert();
+
+        match mode {
+            ColorMode::TrueColor => {
+                rgb.into()
+            },
+            ColorMode::Ansi256 => {
+                tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
+            },
+            ColorMode::Bw => {
+                if value <= 0.5 { tui::style::Color::White } else { tui::style::Color::Black }
+            },
+        }
+    }
+}
+
+static GREYS: ColorMapper = ColorMapper {
+    gradient: colorous::GREYS,
+    invert: true,
+};
+static INFERNO: ColorMapper = ColorMapper {
+    gradient: colorous::INFERNO,
+    invert: false,
+};
+static TURBO: ColorMapper = ColorMapper {
+    gradient: colorous::TURBO,
+    invert: false,
+};
+static MAGMA: ColorMapper = ColorMapper {
+    gradient: colorous::MAGMA,
+    invert: false,
+};
+/*static PLASMA: ColorMapper = ColorMapper {
+    gradient: colorous::PLASMA,
+    invert: false,
+};*/
+static VIRIDIS: ColorMapper = ColorMapper {
+    gradient: colorous::VIRIDIS,
+    invert: false,
+};
+static CUBEHELIX: ColorMapper = ColorMapper {
+    gradient: colorous::CUBEHELIX,
+    invert: false,
+};
+static RAINBOW: ColorMapper = ColorMapper {
+    gradient: colorous::SINEBOW,
+    invert: false,
+};
+
+#[derive(Debug, Clone, Copy)]
+pub enum ColorMap {
+    Greys,
+    Inferno,
+    Turbo,
+    Magma,
+    //Plasma,
+    Viridis,
+    Cubehelix,
+    Rainbow,
+}
+
+impl ColorMap {
+    pub fn get(&self) -> &'static ColorMapper {
+        match self {
+            ColorMap::Greys => &GREYS,
+            ColorMap::Inferno => &INFERNO,
+            ColorMap::Turbo => &TURBO,
+            ColorMap::Magma => &MAGMA,
+            //ColorMap::Plasma => &PLASMA,
+            ColorMap::Viridis => &VIRIDIS,
+            ColorMap::Cubehelix => &CUBEHELIX,
+            ColorMap::Rainbow => &RAINBOW,
+        }
+    }
+
+    pub fn next(&self) -> Self {
+        match self {
+            ColorMap::Greys => ColorMap::Inferno,
+            ColorMap::Inferno => ColorMap::Turbo,
+            ColorMap::Turbo => ColorMap::Magma,
+            ColorMap::Magma => /*ColorMap::Plasma,
+            ColorMap::Plasma =>*/ ColorMap::Viridis,
+            ColorMap::Viridis => ColorMap::Cubehelix,
+            ColorMap::Cubehelix => ColorMap::Rainbow,
+            ColorMap::Rainbow => ColorMap::Greys,
+        }
+    }
+}
+
+impl std::fmt::Display for ColorMap {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
+}
