@@ -37,7 +37,7 @@ impl App {
         let volume = utils::brain_volume::BrainVolume::from_nifti(file_path).unwrap();
         let intensity_range = volume.intensity_range;
         let middle_slice = volume.world_bounds.center().into_iter().collect();
-        let increment = volume.world_bounds.size().minmax2().0 / 24.0;
+        let increment = volume.world_bounds.size().minmax2().0 / 32.0;
         let metadata = utils::metadata::make_metadata_key_value_list(&volume.header);
         let duration = start.elapsed();
 

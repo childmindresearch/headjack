@@ -125,20 +125,25 @@ impl tui::widgets::Widget for SliceWidget<'_> {
             ),
             _ => (0.0, 0.0, 0.0, 0.0),
         };
+        let world_h = world_h_max - world_h_min;
+        let world_v = world_v_max - world_v_min;
 
         let screen_width: usize = text_area.width as usize;
         let screen_height: usize = text_area.height as usize * 2;
 
         let (sampling_width, sampling_height) = fit_relative(
-            world_h_max - world_h_min, 
-            world_v_max - world_v_min, 
+            world_h, 
+            world_v, 
             screen_width as f64, 
             screen_height as f64
         );
 
         let (index, x_index, y_index) = self.slice.position_2d(self.axis);
 
-        let ssaa_factor = 2;
+        let sampling_max = std::cmp::min(sampling_width as usize, sampling_height as usize);
+        let data_max = std::cmp::max(self.volume.local_bounds.xd as usize, self.volume.local_bounds.yd as usize);
+        let downscale_factor = (data_max as f64 / sampling_max as f64).ceil() as usize;
+        let ssaa_factor = std::cmp::min(std::cmp::max(1, downscale_factor), 16);
 
         let sample = utils::slice_cache::CachableSlicerParams::new(
             utils::sampling::SliceAxis::from_index(self.axis),
