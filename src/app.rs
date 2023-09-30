@@ -113,4 +113,16 @@ impl App {
     pub fn toggle_color_map(&mut self) {
         self.color_map = self.color_map.next();
     }
+
+    pub fn increment_metadata_index(&mut self) {
+        if self.metadata_index < self.metadata.len() - 2 {
+            self.metadata_index += 1;
+        }
+    }
+
+    pub fn decrement_metadata_index(&mut self) {
+        if self.metadata_index > 0 {
+            self.metadata_index -= 1;
+        }
+    }
 }

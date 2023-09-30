@@ -32,7 +32,7 @@ impl<'a> tui::widgets::Widget for KeyValueListWidget<'a> {
     fn render(self, area: tui::layout::Rect, buf: &mut tui::buffer::Buffer) {
         for (i, (key, val)) in self.items.iter().enumerate() {
             let i_offset: isize = i as isize - self.offset as isize;
-            if (i_offset < 0) || (i_offset >= (area.height - 1) as isize) {
+            if (i_offset < 0) || (i_offset >= (area.height) as isize) {
                 continue;
             }
             let i_offset: usize = i_offset as usize;
@@ -60,7 +60,7 @@ impl<'a> tui::widgets::Widget for KeyValueListWidget<'a> {
                     self.max_value_len,
                     self.style_value,
                 );
-            } else if i == (area.height - 1) as usize {
+            } else if i_offset == (area.height - 1) as usize {
                 buf.set_stringn(
                     area.x + 1,
                     area.y + i_offset as u16,

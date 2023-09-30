@@ -54,7 +54,7 @@ impl<'a> tui::widgets::Widget for TitleBarWidget<'a> {
         // draw title from the left
         let style_filename_dir = tui::style::Style::default().fg(tui::style::Color::DarkGray);
         let style_filename_stem = tui::style::Style::default()
-            .fg(tui::style::Color::Cyan)
+            .fg(tui::style::Color::Green)
             .add_modifier(tui::style::Modifier::BOLD);
         let style_filename_ext = tui::style::Style::default().fg(tui::style::Color::DarkGray);
 

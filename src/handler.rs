@@ -12,34 +12,58 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
         KeyCode::Char('c') | KeyCode::Char('C') => {
             if key_event.modifiers == KeyModifiers::CONTROL {
                 app.quit();
-            } else {
-                app.toggle_color_map();
             }
-        }
-        // Counter handlers
-        KeyCode::Right | KeyCode::Char('d') => {
-            app.increment_slice(2);
-        }
-        KeyCode::Left | KeyCode::Char('a') => {
-            app.decrement_slice(2);
-        }
-        KeyCode::Up | KeyCode::Char('w') => {
-            app.increment_slice(1);
-        }
-        KeyCode::Down | KeyCode::Char('s') => {
-            app.decrement_slice(1);
-        }
-        KeyCode::Char('x') => {
-            app.decrement_slice(0);
-        }
-        KeyCode::Char('z') | KeyCode::Char('y') => {
-            app.increment_slice(0);
-        }
-        KeyCode::Tab => {
-            app.toggle_tab();
         }
         _ => {}
     }
+
+    match app.mode {
+        crate::app::AppMode::Xyz => {
+            match key_event.code {
+                // Counter handlers
+                KeyCode::Right | KeyCode::Char('d') => {
+                    app.increment_slice(2);
+                }
+                KeyCode::Left | KeyCode::Char('a') => {
+                    app.decrement_slice(2);
+                }
+                KeyCode::Up | KeyCode::Char('w') => {
+                    app.increment_slice(1);
+                }
+                KeyCode::Down | KeyCode::Char('s') => {
+                    app.decrement_slice(1);
+                }
+                KeyCode::Char('x') => {
+                    app.decrement_slice(0);
+                }
+                KeyCode::Char('z') | KeyCode::Char('y') => {
+                    app.increment_slice(0);
+                }
+                KeyCode::Tab => {
+                    app.toggle_tab();
+                }
+                KeyCode::Char('c') | KeyCode::Char('C') => {
+                    app.toggle_color_map();
+                }
+                _ => {}
+            }
+        }
+        crate::app::AppMode::MetaData => {
+            match key_event.code {
+                KeyCode::Right | KeyCode::Char('d') | KeyCode::Down | KeyCode::Char('s')  => {
+                    app.increment_metadata_index();
+                }
+                KeyCode::Left | KeyCode::Char('a') | KeyCode::Up | KeyCode::Char('w') => {
+                    app.decrement_metadata_index();
+                }
+                KeyCode::Tab => {
+                    app.toggle_tab();
+                }
+                _ => {}
+            }
+        }
+    }
+    
     Ok(())
 }
 

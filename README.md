@@ -18,12 +18,12 @@ headjack image.nii.gz
 
 | Key | Action |
 | --- | --- |
-| <kbd>q</kbd> / <kbd>esc</kbd> / <kbd>ctrl</kbd> + <kbd>C</kbd>  | Quit |
-| <kbd>&uarr;</kbd> <kbd>&darr;</kbd> / <kbd>A</kbd> <kbd>D</kbd> | Navigate X axis |
-| <kbd>&larr;</kbd> <kbd>&rarr;</kbd> / <kbd>W</kbd> <kbd>S</kbd> | Navigate Y axis |
-| <kbd>Z</kbd> <kbd>X</kbd> / <kbd>Y</kbd> <kbd>X</kbd> | Navigate Z axis |
+| <kbd>&uarr;</kbd> <kbd>&darr;</kbd> or <kbd>A</kbd> <kbd>D</kbd> | Navigate X axis / Metadata scrolling |
+| <kbd>&larr;</kbd> <kbd>&rarr;</kbd> or <kbd>W</kbd> <kbd>S</kbd> | Navigate Y axis / Metadata scrolling |
+| <kbd>Z</kbd> <kbd>X</kbd> or <kbd>Y</kbd> <kbd>X</kbd> | Navigate Z axis |
 | <kbd>tab</kbd> | Toggle metadata view |
 | <kbd>c</kbd> | Toggle color map |
+| <kbd>Q</kbd> or <kbd>esc</kbd> or <kbd>ctrl</kbd> + <kbd>C</kbd>  | Quit |
 
 ## Installation
 
