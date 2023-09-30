@@ -136,7 +136,7 @@ impl tui::widgets::Widget for SliceWidget<'_> {
             screen_height as f64
         );
 
-        let (index, _x_index, _y_index) = self.slice.position_2d(self.axis);
+        let (index, x_index, y_index) = self.slice.position_2d(self.axis);
 
         let ssaa_factor = 2;
 
@@ -161,6 +161,9 @@ impl tui::widgets::Widget for SliceWidget<'_> {
         let y_offset = (screen_height - img_arr_height) / 2;
 
         let intensity_r = self.slice.intensity_range.1 - self.slice.intensity_range.0;
+
+        let y_index_rational = ((y_index - world_v_min) / (world_v_max - world_v_min) * (img_arr_height as f64)) as usize;
+        let x_index_rational = ((x_index - world_h_min) / (world_h_max - world_h_min) * (img_arr_width as f64)) as usize;
 
         // write img_sized into buf
         for y in (0..((img_arr_height / 2) * 2)).step_by(2) {
@@ -188,8 +191,8 @@ impl tui::widgets::Widget for SliceWidget<'_> {
                 let symb =
                     tui::widgets::BorderType::line_symbols(tui::widgets::BorderType::Rounded);
 
-                let crossair_y = false; //y / 2 * 2 == y_index_rational / 2 * 2;
-                let crossair_x = false; //x == x_index_rational;
+                let crossair_y = y / 2 * 2 == y_index_rational / 2 * 2;
+                let crossair_x = x == x_index_rational;
 
                 if crossair_x || crossair_y {
                     let col_average = utils::colors::calc_termcolor_continuous(
