@@ -9,9 +9,20 @@ use std::io;
 use tui::backend::CrosstermBackend;
 use tui::Terminal;
 
-/// headjack - Terminal UI 3D volume brain imaging viewer
+
+static LONG_ABOUT: &'static str =
+"headjack - Interactive NIfTI Viewer for the Terminal\n\n\
+Interactive controls:\n\
+\t- Arrow keys / WSAD: Move slice (Post.-Ant. / Left-Right)\n\
+\t\tNavigate metadata\n\
+\t- ZX: Move slice (Inf.-Sup.)\n\
+\t- Tab: Toggle metadata view\n\
+\t- C: Toggle color map\n\
+\t- Q / Esc / Ctrl+C: Quit";
+
+/// headjack - Interactive NIfTI Viewer for the Terminal
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about, long_about=LONG_ABOUT)]
 struct Args {
     /// Image file name (.nii or .nii.gz)
     #[arg(index = 1)]
@@ -20,26 +31,24 @@ struct Args {
     /// ANSI color mode for terminals not supporting true color (24bit).
     #[arg(short, long, action)]
     ansi: bool,
-
-    /// Black and white color mode for terminals not supporting any color (what year is this?).
+    
+    /// Verbose (debug) output.
     #[arg(short, long, action)]
-    bw: bool,
+    verbose: bool,
 }
 
 fn main() -> anyhow::Result<()> {
     // Read args
     let args = Args::parse();
 
-    let color_mode = if args.bw {
-        ColorMode::Bw
-    } else if args.ansi {
+    let color_mode = if args.ansi {
         ColorMode::Ansi256
     } else {
         ColorMode::TrueColor
     };
 
     // Create an application.
-    let mut app = App::new(&args.input, color_mode)
+    let mut app = App::new(args.verbose, &args.input, color_mode)
         .map_err(|e| anyhow!(e))
         .with_context(|| format!("Failed to load data '{}'", &args.input))?;
 

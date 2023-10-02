@@ -2,7 +2,6 @@
 pub enum ColorMode {
     TrueColor,
     Ansi256,
-    Bw,
 }
 
 struct HjColor(colorous::Color);
@@ -41,9 +40,6 @@ pub fn calc_termcolor_rational(mode: ColorMode, map: colorous::Gradient, val: us
         ColorMode::Ansi256 => {
             tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
         },
-        ColorMode::Bw => {
-            if val > (val_max/2) { tui::style::Color::White } else { tui::style::Color::Black }
-        },
     }
 }
 
@@ -56,9 +52,6 @@ pub fn calc_termcolor_continuous(mode: ColorMode, map: colorous::Gradient, val: 
         },
         ColorMode::Ansi256 => {
             tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
-        },
-        ColorMode::Bw => {
-            if val > 0.5 { tui::style::Color::White } else { tui::style::Color::Black }
         },
     }
 }
@@ -73,9 +66,6 @@ pub fn calc_termcolor_inverted_rational(mode: ColorMode, map: colorous::Gradient
         ColorMode::Ansi256 => {
             tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
         },
-        ColorMode::Bw => {
-            if val <= (val_max/2) { tui::style::Color::White } else { tui::style::Color::Black }
-        },
     }
 }
 
@@ -88,9 +78,6 @@ pub fn calc_termcolor_inverted_continuous(mode: ColorMode, map: colorous::Gradie
         },
         ColorMode::Ansi256 => {
             tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
-        },
-        ColorMode::Bw => {
-            if val <= 0.5 { tui::style::Color::White } else { tui::style::Color::Black }
         },
     }
 }
@@ -128,9 +115,6 @@ impl ColorMapper {
             ColorMode::Ansi256 => {
                 tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
             },
-            ColorMode::Bw => {
-                if value > 0.5 { tui::style::Color::White } else { tui::style::Color::Black }
-            },
         }
     }
 
@@ -143,9 +127,6 @@ impl ColorMapper {
             },
             ColorMode::Ansi256 => {
                 tui::style::Color::Indexed(ansi_colours::ansi256_from_rgb(rgb))
-            },
-            ColorMode::Bw => {
-                if value <= 0.5 { tui::style::Color::White } else { tui::style::Color::Black }
             },
         }
     }

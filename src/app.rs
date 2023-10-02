@@ -14,6 +14,7 @@ pub struct App {
     /// Is the application running?
     pub running: bool,
 
+    pub verbose: bool,
     pub file_path: String,
     pub volume: utils::brain_volume::BrainVolume,
     pub image_cache: utils::slice_cache::SliceCache,
@@ -30,6 +31,7 @@ pub struct App {
 impl App {
     /// Constructs a new instance of [`App`].
     pub fn new(
+        verbose: bool,
         file_path: &str,
         color_mode: utils::colors::ColorMode,
     ) -> std::result::Result<Self, Box<dyn error::Error + Send + Sync>> {
@@ -52,9 +54,12 @@ impl App {
             utils::colors::ColorMap::Inferno
         };
 
-        println!("Data loaded in: {:?}", duration);
+        if verbose {
+            println!("Data loaded in: {:?}", duration);
+        }
 
         Ok(Self {
+            verbose,
             running: true,
             file_path: file_path.to_string(),
             volume: volume,
