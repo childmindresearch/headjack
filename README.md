@@ -2,7 +2,7 @@
 
 `headjack` is a versatile NIfTI image viewer tailored for the terminal. It offers seamless compatibility with most platforms, including remote clusters and containerized environments, making it an ideal choice for researchers and developers.
 
-![Screenshot](doc/demo.png)
+![Demo GIF](https://github.com/cmi-dair/headjack/assets/33600480/d92a1549-d975-4099-8a51-0e3d99af246a)
 
 ## Usage
 
