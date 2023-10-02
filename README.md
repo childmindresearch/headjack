@@ -1,14 +1,12 @@
-| :exclamation: Work in progress |
-|--------------------------------|
+# `headjack` - Interactive NIfTI Viewer for the Terminal
 
-# `headjack`
+`headjack` is a versatile NIfTI image viewer tailored for the terminal. It offers seamless compatibility with most platforms, including remote clusters and containerized environments, making it an ideal choice for researchers and developers.
 
-NIfTI viewer for the terminal.
-
-(Placeholder screenshot)
 ![Screenshot](doc/demo.png)
 
 ## Usage
+
+To view NIfTI images in the terminal, simply run:
 
 ```sh
 headjack image.nii.gz
@@ -16,28 +14,33 @@ headjack image.nii.gz
 
 ### Controls
 
+Use the following controls to navigate and interact with the viewer:
+
 | Key | Action |
 | --- | --- |
-| <kbd>&uarr;</kbd> <kbd>&darr;</kbd> or <kbd>A</kbd> <kbd>D</kbd> | Navigate X axis / Metadata scrolling |
-| <kbd>&larr;</kbd> <kbd>&rarr;</kbd> or <kbd>W</kbd> <kbd>S</kbd> | Navigate Y axis / Metadata scrolling |
-| <kbd>Z</kbd> <kbd>X</kbd> or <kbd>Y</kbd> <kbd>X</kbd> | Navigate Z axis |
-| <kbd>tab</kbd> | Toggle metadata view |
-| <kbd>c</kbd> | Toggle color map |
-| <kbd>Q</kbd> or <kbd>esc</kbd> or <kbd>ctrl</kbd> + <kbd>C</kbd>  | Quit |
+| <kbd>&uarr;</kbd> <kbd>&darr;</kbd> or <kbd>A</kbd> <kbd>D</kbd> | Navigate along the X-axis / Scroll through metadata |
+| <kbd>&larr;</kbd> <kbd>&rarr;</kbd> or <kbd>W</kbd> <kbd>S</kbd> | Navigate along the Y-axis / Scroll through metadata |
+| <kbd>Z</kbd> <kbd>X</kbd> or <kbd>Y</kbd> <kbd>X</kbd> | Navigate along the Z-axis |
+| <kbd>Tab</kbd> | Toggle metadata view |
+| <kbd>C</kbd> | Toggle color map |
+| <kbd>Q</kbd> or <kbd>Esc</kbd> or <kbd>Ctrl</kbd> + <kbd>C</kbd>  | Quit |
 
 ## Installation
 
-### Precompiled binaries (recommended)
+### Precompiled Binaries (Recommended)
 
-Head over to [releases](https://github.com/cmi-dair/headjack/releases) and download the latest binary for your platform.
+We recommend downloading the latest precompiled binary for your platform from the [releases](https://github.com/cmi-dair/headjack/releases) page. Optionally, you can add the binary to your `PATH` environment variable for easier access. `headjack` is a self-contained executable with no runtime dependencies.
 
-**Optionally** add the binary to your `PATH` environment variable.
+To simplify access, consider aliasing the binary to `hj`:
 
-`headjack` is and will always be a single executable with 0 runtime dependencies.
+```sh
+alias hj=/path/to/headjack
+```
+
 
 ### Build from source
 
-With latest Rust compiler installed, run:
+If you prefer to build `headjack` from source, ensure you have the latest Rust compiler installed and then run:
 
 ```sh
 cargo build --release
@@ -47,16 +50,16 @@ The binary will be located at `target/release/headjack`.
 
 ## Troubleshooting
 
-### Terminal colors look weird
+### Terminal Colors Issue
 
-Your terminal might not support 24-bit colors. Try running `headjack` with `-a`/`--ansi` for 256 ANSI color mode or `-b`/`--bw` for black and white mode.
+If your terminal displays colors incorrectly, it may not support 24-bit colors. You can try running headjack with the `-a`/`--ansi` flag for 256 ANSI color mode.
 
-### Unix: libc error on startup 
+### Unix: Libc Error on Startup
 
-If you get an error like this:
+If you encounter an error related to `libc` when starting headjack, such as:
 
 ```
 /lib64/libm.so.6: versionGLIBC_2.29' not found
 ```
 
-You are probably using an older version of glibc. Try using the `*-musl` variant from the [releases page](https://github.com/cmi-dair/headjack/releases). Or build from source with `musl` target.
+It likely indicates that you are using an older version of glibc. Consider using the `*-musl`  variant available on the [releases page](https://github.com/cmi-dair/headjack/releases), or build `headjack` from source with the `musl` target.
