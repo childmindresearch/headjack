@@ -1,17 +1,22 @@
-use crate::app::{App, AppResult};
+use crate::app::App;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent};
 
 /// Handles the key events and updates the state of [`App`].
-pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
+pub fn handle_key_events(
+    key_event: KeyEvent,
+    app: &mut App,
+) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
     match key_event.code {
         // Exit application on `ESC` or `q`
         KeyCode::Esc | KeyCode::Char('q') => {
             app.quit();
+            return Ok(());
         }
         // Exit application on `Ctrl-C`
         KeyCode::Char('c') | KeyCode::Char('C') => {
             if key_event.modifiers == KeyModifiers::CONTROL {
                 app.quit();
+                return Ok(());
             }
         }
         _ => {}
@@ -48,26 +53,27 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
                 _ => {}
             }
         }
-        crate::app::AppMode::MetaData => {
-            match key_event.code {
-                KeyCode::Right | KeyCode::Char('d') | KeyCode::Down | KeyCode::Char('s')  => {
-                    app.increment_metadata_index();
-                }
-                KeyCode::Left | KeyCode::Char('a') | KeyCode::Up | KeyCode::Char('w') => {
-                    app.decrement_metadata_index();
-                }
-                KeyCode::Tab => {
-                    app.toggle_tab();
-                }
-                _ => {}
+        crate::app::AppMode::MetaData => match key_event.code {
+            KeyCode::Right | KeyCode::Char('d') | KeyCode::Down | KeyCode::Char('s') => {
+                app.increment_metadata_index();
             }
-        }
+            KeyCode::Left | KeyCode::Char('a') | KeyCode::Up | KeyCode::Char('w') => {
+                app.decrement_metadata_index();
+            }
+            KeyCode::Tab => {
+                app.toggle_tab();
+            }
+            _ => {}
+        },
     }
-    
+
     Ok(())
 }
 
-pub fn handle_mouse_events(_mouse_event: MouseEvent, _app: &mut App) -> AppResult<()> {
+pub fn handle_mouse_events(
+    _mouse_event: MouseEvent,
+    _app: &mut App,
+) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
     /*match mouse_event.kind {
         crossterm::event::MouseEventKind::Down(button) => {
             match button {

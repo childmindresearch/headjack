@@ -1,5 +1,6 @@
+use anyhow::{anyhow, Context};
 use clap::Parser;
-use headjack::app::{App, AppResult};
+use headjack::app::App;
 use headjack::event::{Event, EventHandler};
 use headjack::handler::{handle_key_events, handle_mouse_events};
 use headjack::tui::Tui;
@@ -19,15 +20,13 @@ struct Args {
     /// ANSI color mode for terminals not supporting true color (24bit).
     #[arg(short, long, action)]
     ansi: bool,
-    
+
     /// Black and white color mode for terminals not supporting any color (what year is this?).
     #[arg(short, long, action)]
     bw: bool,
 }
 
-
-
-fn main() -> AppResult<()> {
+fn main() -> anyhow::Result<()> {
     // Read args
     let args = Args::parse();
 
@@ -40,29 +39,46 @@ fn main() -> AppResult<()> {
     };
 
     // Create an application.
-    let mut app = App::new(&args.input, color_mode);
+    let mut app = App::new(&args.input, color_mode)
+        .map_err(|e| anyhow!(e))
+        .with_context(|| format!("Failed to load data '{}'", &args.input))?;
 
     // Initialize the terminal user interface.
     let backend = CrosstermBackend::new(io::stderr());
     let terminal = Terminal::new(backend)?;
     let events = EventHandler::new(250);
     let mut tui = Tui::new(terminal, events);
-    tui.init()?;
+    tui.init()
+        .map_err(|e| anyhow!(e))
+        .with_context(|| format!("Failed to init terminal"))?;
 
     // Start the main loop.
     while app.running {
         // Render the user interface.
-        tui.draw(&mut app)?;
+        tui.draw(&mut app)
+            .map_err(|e| anyhow!(e))
+            .with_context(|| format!("Failed to draw"))?;
         // Handle events.
-        match tui.events.next()? {
+        match tui
+            .events
+            .next()
+            .map_err(|e| anyhow!(e))
+            .with_context(|| format!("Failed to process event"))?
+        {
             Event::Tick => app.tick(),
-            Event::Key(key_event) => handle_key_events(key_event, &mut app)?,
-            Event::Mouse(mouse_event) => handle_mouse_events(mouse_event, &mut app)?,
+            Event::Key(key_event) => handle_key_events(key_event, &mut app)
+                .map_err(|e| anyhow!(e))
+                .with_context(|| format!("Failed to process key event"))?,
+            Event::Mouse(mouse_event) => handle_mouse_events(mouse_event, &mut app)
+                .map_err(|e| anyhow!(e))
+                .with_context(|| format!("Failed to process mouse event"))?,
             Event::Resize(_, _) => {}
         }
     }
 
     // Exit the user interface.
-    tui.exit()?;
+    tui.exit()
+        .map_err(|e| anyhow!(e))
+        .with_context(|| format!("Failed to exit the interface"))?;
     Ok(())
 }

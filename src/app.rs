@@ -1,9 +1,6 @@
 use crate::utils::argminmax2::MinMax2;
 use crate::{utils, widgets};
-use std::error;
-
-/// Application result type.
-pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
+use std::error::{self};
 
 #[derive(Debug, Clone, Copy)]
 pub enum AppMode {
@@ -32,9 +29,12 @@ pub struct App {
 
 impl App {
     /// Constructs a new instance of [`App`].
-    pub fn new(file_path: &str, color_mode: utils::colors::ColorMode) -> Self {
+    pub fn new(
+        file_path: &str,
+        color_mode: utils::colors::ColorMode,
+    ) -> std::result::Result<Self, Box<dyn error::Error + Send + Sync>> {
         let start = std::time::Instant::now();
-        let volume = utils::brain_volume::BrainVolume::from_nifti(file_path).unwrap();
+        let volume = utils::brain_volume::BrainVolume::from_nifti(file_path)?;
         let intensity_range = volume.intensity_range;
         let middle_slice = volume.world_bounds.center().into_iter().collect();
         let increment = volume.world_bounds.size().minmax2().0 / 32.0;
@@ -54,7 +54,7 @@ impl App {
 
         println!("Data loaded in: {:?}", duration);
 
-        Self {
+        Ok(Self {
             running: true,
             file_path: file_path.to_string(),
             volume: volume,
@@ -67,7 +67,7 @@ impl App {
             color_mode: color_mode,
             metadata: metadata,
             metadata_index: 0,
-        }
+        })
     }
 
     /// Handles the tick event of the terminal.

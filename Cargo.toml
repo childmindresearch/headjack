@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 ansi_colours = "1.2.2"
+anyhow = "1.0.75"
 argminmax = { version = "0.6.1", features = ["ndarray", "float"], default-features = false }
 clap = { version = "4.4.2", features = ["derive"] }
 colorous = "1.0.12"

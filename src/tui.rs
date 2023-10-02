@@ -1,4 +1,4 @@
-use crate::app::{App, AppResult};
+use crate::app::App;
 use crate::event::EventHandler;
 use crate::ui;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
@@ -29,7 +29,7 @@ impl<B: Backend> Tui<B> {
     /// Initializes the terminal interface.
     ///
     /// It enables the raw mode and sets terminal properties.
-    pub fn init(&mut self) -> AppResult<()> {
+    pub fn init(&mut self) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
         terminal::enable_raw_mode()?;
         crossterm::execute!(io::stderr(), EnterAlternateScreen, EnableMouseCapture)?;
 
@@ -50,7 +50,10 @@ impl<B: Backend> Tui<B> {
     ///
     /// [`Draw`]: tui::Terminal::draw
     /// [`rendering`]: crate::ui:render
-    pub fn draw(&mut self, app: &mut App) -> AppResult<()> {
+    pub fn draw(
+        &mut self,
+        app: &mut App,
+    ) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.terminal.draw(|frame| ui::render(app, frame))?;
         Ok(())
     }
@@ -59,7 +62,7 @@ impl<B: Backend> Tui<B> {
     ///
     /// This function is also used for the panic hook to revert
     /// the terminal properties if unexpected errors occur.
-    fn reset() -> AppResult<()> {
+    fn reset() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
         terminal::disable_raw_mode()?;
         crossterm::execute!(io::stdout(), LeaveAlternateScreen, DisableMouseCapture)?;
         Ok(())
@@ -68,7 +71,7 @@ impl<B: Backend> Tui<B> {
     /// Exits the terminal interface.
     ///
     /// It disables the raw mode and reverts back the terminal properties.
-    pub fn exit(&mut self) -> AppResult<()> {
+    pub fn exit(&mut self) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Self::reset()?;
         self.terminal.show_cursor()?;
         Ok(())

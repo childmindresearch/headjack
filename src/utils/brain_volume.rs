@@ -32,7 +32,7 @@ pub fn array_view_3d<'a>(arr: &'a ArrayD<f64>) -> ArrayView3<'a, f64> {
 
 
 impl BrainVolume {
-    pub fn from_nifti(path_nifti: &str) -> Result<Self, Box<dyn Error>> {
+    pub fn from_nifti(path_nifti: &str) -> Result<Self, Box<dyn Error + Send + Sync>> {
         let nif = nifti::ReaderOptions::new().read_file(path_nifti)?;
         let header = nif.header().to_owned();
         let affine = header_get_affine(&header);
