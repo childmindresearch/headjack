@@ -101,3 +101,18 @@ fn header_get_affine(header: &NiftiHeader) -> ndarray::Array2<f64> {
         [0., 0., 0., 1.]
     ].mapv(|elem| elem as f64)
 }
+
+pub fn xyz_units_str(header: &BrainMetaData) -> &str {
+    match header.xyzt_to_space().unwrap_or(nifti::Unit::Unknown) {
+        nifti::Unit::Unknown => "au",
+        nifti::Unit::Meter => "m",
+        nifti::Unit::Mm => "mm",
+        nifti::Unit::Micron => "µm",
+        nifti::Unit::Sec => "s",
+        nifti::Unit::Msec => "ms",
+        nifti::Unit::Usec => "µs",
+        nifti::Unit::Hz => "Hz",
+        nifti::Unit::Ppm => "ppm",
+        nifti::Unit::Rads => "rad/s",
+    }
+}
