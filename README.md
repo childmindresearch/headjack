@@ -2,7 +2,7 @@
 
 `headjack` is a versatile NIfTI image viewer tailored for the terminal. It offers seamless compatibility with most platforms, including remote clusters and containerized environments, making it an ideal choice for researchers and developers.
 
-![Demo GIF](https://github.com/cmi-dair/headjack/assets/33600480/d92a1549-d975-4099-8a51-0e3d99af246a)
+![Demo GIF](https://github.com/childmindresearch/headjack/assets/33600480/d92a1549-d975-4099-8a51-0e3d99af246a)
 
 ## Usage
 
@@ -29,7 +29,7 @@ Use the following controls to navigate and interact with the viewer:
 
 ### Precompiled Binaries (Recommended)
 
-We recommend downloading the latest precompiled binary for your platform from the [releases](https://github.com/cmi-dair/headjack/releases) page. Optionally, you can add the binary to your `PATH` environment variable for easier access. `headjack` is a self-contained executable with no runtime dependencies.
+We recommend downloading the latest precompiled binary for your platform from the [releases](https://github.com/childmindresearch/headjack/releases) page. Optionally, you can add the binary to your `PATH` environment variable for easier access. `headjack` is a self-contained executable with no runtime dependencies.
 
 To simplify access, consider aliasing the binary to `hj`:
 
@@ -62,4 +62,4 @@ If you encounter an error related to `libc` when starting headjack, such as:
 /lib64/libm.so.6: versionGLIBC_2.29' not found
 ```
 
-It likely indicates that you are using an older version of glibc. Consider using the `*-musl`  variant available on the [releases page](https://github.com/cmi-dair/headjack/releases), or build `headjack` from source with the `musl` target.
+It likely indicates that you are using an older version of glibc. Consider using the `*-musl`  variant available on the [releases page](https://github.com/childmindresearch/headjack/releases), or build `headjack` from source with the `musl` target.
