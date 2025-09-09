@@ -15,7 +15,7 @@ impl<'a> TitleBarWidget<'a> {
 }
 
 fn path_extension_all(path: &std::path::Path) -> String {
-    let mut p = path.clone();
+    let mut p = path;
     let mut ext = String::new();
     while let Some(e) = p.extension() {
         ext = format!("{}.{}", e.to_str().unwrap(), ext);

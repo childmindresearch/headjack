@@ -106,19 +106,20 @@ impl tui::widgets::Widget for DoubleYImageRenderer<'_> {
             for x in 0..(area.width as usize) {
                 let bx = area.left() + x as u16;
                 let by = area.bottom() - (y / 2) as u16 - 1; // y is flipped
-                let c = buf.get_mut(bx, by);
+                let c = buf.cell_mut((bx, by));
+                if let Some(c) = c {
+                    match self.image.has_overlay(x, y) {
+                        Some(overlay) => {
+                            let color = self.image.get_double(x, y);
+                            let color_inverted = self.image.get_double_max_contrast(x, y);
+                            c.set_bg(color).set_fg(color_inverted).set_char(overlay);
+                        }
+                        None => {
+                            let color_upper = self.image.get(x, y + 1);
+                            let color_lower = self.image.get(x, y);
 
-                match self.image.has_overlay(x, y) {
-                    Some(overlay) => {
-                        let color = self.image.get_double(x, y);
-                        let color_inverted = self.image.get_double_max_contrast(x, y);
-                        c.set_bg(color).set_fg(color_inverted).set_char(overlay);
-                    }
-                    None => {
-                        let color_upper = self.image.get(x, y + 1);
-                        let color_lower = self.image.get(x, y);
-
-                        c.set_bg(color_upper).set_fg(color_lower).set_char('▄');
+                            c.set_bg(color_upper).set_fg(color_lower).set_char('▄');
+                        }
                     }
                 }
             }
@@ -329,7 +330,7 @@ impl tui::widgets::Widget for SliceWidget<'_> {
         let x_index_rational =
             ((x_index - world_h_min) / world_h * (img_arr_width as f64)) as usize;
 
-        let symb = tui::widgets::BorderType::line_symbols(tui::widgets::BorderType::Rounded);
+        let symb = tui::symbols::line::ROUNDED;
         let symb_cross = symb.cross.chars().next().unwrap();
         let symb_vertical = symb.vertical.chars().next().unwrap();
         let symb_horizontal = symb.horizontal.chars().next().unwrap();

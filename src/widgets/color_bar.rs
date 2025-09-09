@@ -28,7 +28,7 @@ impl tui::widgets::Widget for ColorBarWidget {
         let color_mapper = self.color_map.get();
         for i in 0..area.width {
             let color = color_mapper.color(i as f64 / area.width as f64, self.color_mode);
-            buf.get_mut(area.x + i, area.y).set_bg(color);
+            buf.cell_mut((area.x + i, area.y)).map(|c| c.set_bg(color));
         }
 
         // write min max values

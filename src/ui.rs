@@ -17,7 +17,7 @@ use crate::{
 static MODE_TITLES: [&str; 2] = ["Voxel", "Metadata"];
 
 /// Renders the user interface widgets.
-pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
+pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_>) {
     let layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints(
@@ -28,7 +28,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
             ]
             .as_ref(),
         )
-        .split(frame.size());
+        .split(frame.area());
 
     // write out filename
 

@@ -54,7 +54,7 @@ impl<B: Backend> Tui<B> {
         &mut self,
         app: &mut App,
     ) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        self.terminal.draw(|frame| ui::render(app, frame))?;
+        self.terminal.draw(|frame| ui::render::<B>(app, frame))?;
         Ok(())
     }
 

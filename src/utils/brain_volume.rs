@@ -71,7 +71,7 @@ impl BrainVolume {
         let arr_view_3d = self.array_view_3d();
         
         let out_arr_flat = sampling::map_coordinates_3d(&arr_view_3d, &local_sample_coords.view(), default_value);
-        let out_arr_2d = out_arr_flat.into_shape((resolution.1, resolution.0)).unwrap().reversed_axes();
+        let out_arr_2d = out_arr_flat.into_shape_with_order((resolution.1, resolution.0)).unwrap().reversed_axes();
 
         out_arr_2d
     }
@@ -83,7 +83,7 @@ impl BrainVolume {
         let arr_view_3d = self.array_view_3d();
         
         let out_arr_flat = sampling::map_coordinates_3d(&arr_view_3d, &world_sample_coords.view(), default_value);
-        let out_arr_2d = out_arr_flat.into_shape(resolution).unwrap();
+        let out_arr_2d = out_arr_flat.into_shape_with_order(resolution).unwrap();
 
         out_arr_2d
     }

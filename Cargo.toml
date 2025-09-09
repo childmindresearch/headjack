@@ -11,13 +11,13 @@ anyhow = "1.0.75"
 argminmax = { version = "0.6.1", features = ["ndarray", "float"], default-features = false }
 clap = { version = "4.4.2", features = ["derive"] }
 colorous = "1.0.12"
-crossterm = "0.27.0"
+crossterm = "0.29.0"
 lazy_static = "1.4.0"
-lru = "0.11.0"
-nalgebra = "0.32.3"
-ndarray = "0.15.6"
-ndarray-stats = "0.5.1"
-nifti = "0.16.0"
+lru = "0.16.0"
+nalgebra = "0.34.0"
+ndarray = "0.16.1"
+ndarray-stats = "0.6.0"
+nifti = "0.17.0"
 noisy_float = "0.2.0"
 num = "0.4.1"
-tui = { package = "ratatui", version = "0.23.0" }
+tui = { package = "ratatui", version = "0.29.0" }
